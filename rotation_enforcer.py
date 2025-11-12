@@ -1,2 +1,0 @@
-
-print("Rotation Enforcer Placeholder")
