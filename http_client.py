@@ -15,41 +15,58 @@ def _normalize_map_key(value: str) -> str:
 
 
 def _build_fallback_canonical_map() -> dict[str, str]:
-    alias_to_canonical = {
-        "stmariedumont_warfare": "St. Marie Du Mont Warfare",
-        "stmariedumont_warfare_night": "St. Marie Du Mont Warfare (Night)",
-        "stmereeglise_warfare": "St. Mere Eglise Warfare",
-        "stmereeglise_warfare_night": "St. Mere Eglise Warfare (Night)",
-        "carentan_warfare": "Carentan Warfare",
-        "carentan_warfare_night": "Carentan Warfare (Night)",
-        "utahbeach_warfare": "Utah Beach Warfare",
-        "utahbeach_warfare_night": "Utah Beach Warfare (Night)",
-        "omahabeach_warfare": "Omaha Beach Warfare",
-        "omahabeach_warfare_night": "Omaha Beach Warfare (Night)",
-        "foy_warfare": "Foy Warfare",
-        "kharkov_warfare": "Kharkov Warfare",
-        "kursk_warfare": "Kursk Warfare",
-        "purpleheartlane_warfare": "Purple Heart Lane Warfare (Rain)",
-        "hill400_warfare": "Hill 400 Warfare",
-        "driel_warfare": "Driel Warfare",
-        "hurtgenforest_warfare": "Hurtgen Forest Warfare",
-        "hurtgenforest_warfare_V2": "Hurtgen Forest Warfare",
-        "elsenbornridge_warfare": "Elsenborn Ridge Warfare",
-        "elsenbornridge_warfare_day": "Elsenborn Ridge Warfare (Day)",
-        "remagen_warfare": "Remagen Warfare",
-        "mortain_warfare": "Mortain Warfare (Overcast)",
-        "mortain_warfare_day": "Mortain Warfare (Day)",
-        "tobruk_warfare": "Tobruk Warfare",
-        "elalamein_warfare": "El Alamein Warfare",
-        "stalingrad_warfare": "Stalingrad Warfare",
+    """Provide canonical CRCON layer identifiers for common aliases.
+
+    The HTTP API expects `rotadd/rotadd` payloads to reference the internal
+    `layer_name` strings even when the rotation snapshot is empty and we
+    cannot derive those identifiers dynamically. This table bridges common
+    pretty names (and slight spelling variations) back to their canonical
+    layer IDs so we never send human-readable names that the API rejects.
+    """
+    canonical_variants = {
+        "stmariedumont_warfare": ["St. Marie Du Mont Warfare"],
+        "stmariedumont_warfare_night": ["St. Marie Du Mont Warfare (Night)"],
+        "stmereeglise_warfare": ["St. Mere Eglise Warfare"],
+        "stmereeglise_warfare_night": ["St. Mere Eglise Warfare (Night)"],
+        "carentan_warfare": ["Carentan Warfare"],
+        "carentan_warfare_night": ["Carentan Warfare (Night)"],
+        "utahbeach_warfare": ["Utah Beach Warfare"],
+        "utahbeach_warfare_night": ["Utah Beach Warfare (Night)"],
+        "omahabeach_warfare": ["Omaha Beach Warfare"],
+        "omahabeach_warfare_night": ["Omaha Beach Warfare (Night)"],
+        "foy_warfare": ["Foy Warfare"],
+        "kharkov_warfare": ["Kharkov Warfare"],
+        "kursk_warfare": ["Kursk Warfare"],
+        "purpleheartlane_warfare": [
+            "Purple Heart Lane Warfare (Rain)",
+            "Purple Heart Lane Warfare",
+        ],
+        "hill400_warfare": ["Hill 400 Warfare"],
+        "driel_warfare": ["Driel Warfare"],
+        "hurtgenforest_warfare": ["Hurtgen Forest Warfare"],
+        "hurtgenforest_warfare_V2": [
+            "Hurtgen Forest Warfare V2",
+            "Hurtgen Forest Warfare (V2)",
+        ],
+        "elsenbornridge_warfare": ["Elsenborn Ridge Warfare"],
+        "elsenbornridge_warfare_day": ["Elsenborn Ridge Warfare (Day)"],
+        "remagen_warfare": ["Remagen Warfare"],
+        "mortain_warfare": ["Mortain Warfare (Overcast)"],
+        "mortain_warfare_day": ["Mortain Warfare (Day)"],
+        "tobruk_warfare": ["Tobruk Warfare"],
+        "elalamein_warfare": ["El Alamein Warfare"],
+        "stalingrad_warfare": ["Stalingrad Warfare"],
     }
 
     fallback = {}
-    for alias, canonical in alias_to_canonical.items():
-        if not canonical:
-            continue
-        fallback[_normalize_map_key(alias)] = canonical
-        fallback[_normalize_map_key(canonical)] = canonical
+    for canonical, aliases in canonical_variants.items():
+        names = set(aliases or [])
+        names.add(canonical)
+        for name in names:
+            normalized = _normalize_map_key(name)
+            if not normalized:
+                continue
+            fallback[normalized] = canonical
     return fallback
 
 
