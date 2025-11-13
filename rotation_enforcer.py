@@ -206,11 +206,10 @@ def _add_target_maps(maps: list[str]):
 
 
 def _apply_map_pool(current: list[str], target: list[str]):
-    queued = current[1:] if current and len(current) > 1 else []
-    if queued:
-        _remove_queued_maps(queued)
+    if current:
+        _remove_queued_maps(current)
     else:
-        log.debug("No queued maps remain to remove before applying new map pool")
+        log.debug("Current rotation empty; nothing to remove before applying map pool")
 
     if not target:
         log.info("Target map pool is empty for this block; rotation queue cleared")
