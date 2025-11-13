@@ -328,7 +328,9 @@ class CrconApiClient:
             if not isinstance(r, str):
                 continue
             n = _normalize_map_key(r)
-            canonical = mapping.get(n) or FALLBACK_CANONICAL_MAPS.get(n)
+            # Prefer known canonical identifiers even when the rotation payload
+            # only exposes pretty names so removal uses layer IDs the server accepts.
+            canonical = FALLBACK_CANONICAL_MAPS.get(n) or mapping.get(n)
             if canonical:
                 result.append(canonical)
             else:
