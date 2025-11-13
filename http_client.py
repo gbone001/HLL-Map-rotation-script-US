@@ -136,6 +136,8 @@ class CrconApiClient:
             self.session.headers.update({"Authorization": f"Bearer {token}"})
             log.info("Initialized HTTP CRCON API client (token mode) for %s/%s", self.base_url.rstrip("/"), self.api_root or "")
 
+        self._map_catalog_loaded = False
+        self._map_lookup: dict[str, str] = {}
 
     def _build_url(self, endpoint: str) -> str:
         base = self.base_url.rstrip("/")
@@ -353,6 +355,64 @@ class CrconApiClient:
             return payload
         return []
 
+    def _extract_map_catalog_entries(self, catalog_resp):
+        if not catalog_resp:
+            return []
+        payload = catalog_resp.get("result") if isinstance(catalog_resp, dict) else catalog_resp
+        if isinstance(payload, dict):
+            if "maps" in payload:
+                payload = payload["maps"]
+            elif "result" in payload:
+                payload = payload["result"]
+        if isinstance(payload, list):
+            return payload
+        return []
+
+    def _ensure_map_catalog(self):
+        if self._map_catalog_loaded:
+            return
+        try:
+            raw = self._request("get_maps", method="GET")
+        except CrconHttpError as exc:
+            log.warning("Unable to fetch map catalog via get_maps: %s", exc)
+            self._map_catalog_loaded = True
+            self._map_lookup = {}
+            return
+
+        entries = self._extract_map_catalog_entries(raw)
+        lookup = {}
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            canonical = (
+                entry.get("layer_name")
+                or entry.get("name")
+                or entry.get("map_name")
+                or entry.get("pretty_name")
+            )
+            display = entry.get("pretty_name") or entry.get("name") or canonical
+            if canonical and display:
+                PREFERRED_DISPLAY_NAMES[canonical] = display
+
+            aliases = set()
+            for key in ("layer_name", "name", "map_name", "pretty_name"):
+                value = entry.get(key)
+                if isinstance(value, str) and value:
+                    aliases.add(value)
+
+            for alias in aliases:
+                normalized = _normalize_map_key(alias)
+                if normalized and canonical:
+                    lookup[normalized] = canonical
+
+        if lookup:
+            log.info("Loaded %d map entries from get_maps", len(lookup))
+        else:
+            log.warning("get_maps response did not include usable map data")
+
+        self._map_lookup = lookup
+        self._map_catalog_loaded = True
+
     def _resolve_to_canonical(self, requested_names, rotation_resp):
         """Map a list of requested names (pretty or layer names) to canonical
         identifiers present in the current rotation response.
@@ -360,6 +420,7 @@ class CrconApiClient:
         rotation_resp is the raw parsed response from `get_map_rotation` and
         may be None if the fetch failed.
         """
+        self._ensure_map_catalog()
         # If we couldn't fetch rotation entries, return requests unchanged
         entries = self._extract_rotation_entries(rotation_resp)
 
@@ -398,7 +459,11 @@ class CrconApiClient:
             n = _normalize_map_key(r)
             # Prefer known canonical identifiers even when the rotation payload
             # only exposes pretty names so removal uses layer IDs the server accepts.
-            canonical = FALLBACK_CANONICAL_MAPS.get(n) or mapping.get(n)
+            canonical = (
+                mapping.get(n)
+                or self._map_lookup.get(n)
+                or FALLBACK_CANONICAL_MAPS.get(n)
+            )
             if canonical:
                 result.append(canonical)
             else:
