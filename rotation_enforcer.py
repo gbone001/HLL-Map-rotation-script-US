@@ -166,8 +166,8 @@ def get_next_transition(cfg):
 def safe_rcon(command: str):
     try:
         return http_rcon(command)
-    except CrconHttpError:
-        log.warn("HTTP failed → fallback to RCON v2")
+    except Exception as exc:
+        log.warning("HTTP failed → fallback to RCON v2: %s", exc, exc_info=True)
         return RconV2().send_cmd(command)
 
 def get_rotation():

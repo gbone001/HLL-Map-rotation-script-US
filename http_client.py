@@ -22,8 +22,8 @@ class CrconHttpClient:
         if not token:
             raise CrconHttpError("CRCON_HTTP_BEARER_TOKEN is required for HTTP CRCON")
 
-        self.timeout = float(get_env("CRCON_HTTP_TIMEOUT", "10"))
-        verify_raw = get_env("CRCON_HTTP_VERIFY", "true").lower()
+        self.timeout = float(get_setting("CRCON_HTTP_TIMEOUT", "CRCON_HTTP_TIMEOUT", "10"))
+        verify_raw = get_setting("CRCON_HTTP_VERIFY", "CRCON_HTTP_VERIFY", "true").lower()
         self.verify = verify_raw not in ("false", "0", "no", "off")
         path = get_setting("CRCON_HTTP_COMMAND_PATH", "CRCON_HTTP_COMMAND_PATH", "/api/rcon/command")
         self.command_url = self._normalize_url(path)
