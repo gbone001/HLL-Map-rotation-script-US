@@ -8,6 +8,54 @@ from config import get_setting
 log = logging.getLogger(__name__)
 
 
+def _normalize_map_key(value: str) -> str:
+    if not isinstance(value, str):
+        return ""
+    return "".join(c.lower() for c in value if c.isalnum())
+
+
+def _build_fallback_canonical_map() -> dict[str, str]:
+    alias_to_canonical = {
+        "stmariedumont_warfare": "St. Marie Du Mont Warfare",
+        "stmariedumont_warfare_night": "St. Marie Du Mont Warfare (Night)",
+        "stmereeglise_warfare": "St. Mere Eglise Warfare",
+        "stmereeglise_warfare_night": "St. Mere Eglise Warfare (Night)",
+        "carentan_warfare": "Carentan Warfare",
+        "carentan_warfare_night": "Carentan Warfare (Night)",
+        "utahbeach_warfare": "Utah Beach Warfare",
+        "utahbeach_warfare_night": "Utah Beach Warfare (Night)",
+        "omahabeach_warfare": "Omaha Beach Warfare",
+        "omahabeach_warfare_night": "Omaha Beach Warfare (Night)",
+        "foy_warfare": "Foy Warfare",
+        "kharkov_warfare": "Kharkov Warfare",
+        "kursk_warfare": "Kursk Warfare",
+        "purpleheartlane_warfare": "Purple Heart Lane Warfare (Rain)",
+        "hill400_warfare": "Hill 400 Warfare",
+        "driel_warfare": "Driel Warfare",
+        "hurtgenforest_warfare": "Hurtgen Forest Warfare",
+        "hurtgenforest_warfare_V2": "Hurtgen Forest Warfare",
+        "elsenbornridge_warfare": "Elsenborn Ridge Warfare",
+        "elsenbornridge_warfare_day": "Elsenborn Ridge Warfare (Day)",
+        "remagen_warfare": "Remagen Warfare",
+        "mortain_warfare": "Mortain Warfare (Overcast)",
+        "mortain_warfare_day": "Mortain Warfare (Day)",
+        "tobruk_warfare": "Tobruk Warfare",
+        "elalamein_warfare": "El Alamein Warfare",
+        "stalingrad_warfare": "Stalingrad Warfare",
+    }
+
+    fallback = {}
+    for alias, canonical in alias_to_canonical.items():
+        if not canonical:
+            continue
+        fallback[_normalize_map_key(alias)] = canonical
+        fallback[_normalize_map_key(canonical)] = canonical
+    return fallback
+
+
+FALLBACK_CANONICAL_MAPS = _build_fallback_canonical_map()
+
+
 class CrconHttpError(Exception):
     """Raised when the HTTP CRCON backend cannot execute a command."""
 
@@ -210,6 +258,16 @@ class CrconApiClient:
                 return
             raise
 
+    def _extract_rotation_entries(self, rotation_resp):
+        if not rotation_resp:
+            return []
+        payload = rotation_resp.get("result") if isinstance(rotation_resp, dict) else rotation_resp
+        if isinstance(payload, dict) and "rotation" in payload:
+            payload = payload["rotation"]
+        if isinstance(payload, list):
+            return payload
+        return []
+
     def _resolve_to_canonical(self, requested_names, rotation_resp):
         """Map a list of requested names (pretty or layer names) to canonical
         identifiers present in the current rotation response.
@@ -218,22 +276,9 @@ class CrconApiClient:
         may be None if the fetch failed.
         """
         # If we couldn't fetch rotation entries, return requests unchanged
-        if not rotation_resp:
-            return list(requested_names)
-
-        # Extract rotation entries (may be under 'result' or 'rotation')
-        payload = rotation_resp.get("result") if isinstance(rotation_resp, dict) else rotation_resp
-        if isinstance(payload, dict) and "rotation" in payload:
-            entries = payload["rotation"]
-        elif isinstance(payload, list):
-            entries = payload
-        else:
-            entries = []
+        entries = self._extract_rotation_entries(rotation_resp)
 
         # Build candidate map of normalized -> canonical
-        def norm(s: str) -> str:
-            return "".join(c.lower() for c in s if c.isalnum())
-
         mapping = {}
         for entry in entries:
             if isinstance(entry, str):
@@ -259,15 +304,16 @@ class CrconApiClient:
                 continue
 
             for k in keys:
-                mapping[norm(k)] = canonical
+                mapping[_normalize_map_key(k)] = canonical
 
         result = []
         for r in requested_names:
             if not isinstance(r, str):
                 continue
-            n = norm(r)
-            if n in mapping:
-                result.append(mapping[n])
+            n = _normalize_map_key(r)
+            canonical = mapping.get(n) or FALLBACK_CANONICAL_MAPS.get(n)
+            if canonical:
+                result.append(canonical)
             else:
                 # no match — send original and let server decide
                 result.append(r)
