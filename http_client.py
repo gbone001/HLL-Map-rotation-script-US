@@ -81,6 +81,13 @@ def _build_fallback_canonical_map() -> dict[str, str]:
 FALLBACK_CANONICAL_MAPS = _build_fallback_canonical_map()
 
 
+def _is_invalid_map_error(message: str) -> bool:
+    if not message:
+        return False
+    msg_lower = message.lower()
+    return "not in rotation" in msg_lower or "request was invalid" in msg_lower
+
+
 class CrconHttpError(Exception):
     """Raised when the HTTP CRCON backend cannot execute a command."""
 
@@ -228,34 +235,56 @@ class CrconApiClient:
         except CrconHttpError:
             rotation_resp = None
 
-        canonical = self._resolve_to_canonical(names, rotation_resp)
-        payload_names = [
+        canonical = [name for name in self._resolve_to_canonical(names, rotation_resp) if name]
+        if not canonical:
+            log.debug("Skipping add_maps_to_rotation because no canonical names were resolved")
+            return
+
+        display_names = [
             PREFERRED_DISPLAY_NAMES.get(name, name)
             for name in canonical
             if isinstance(name, str) and name
         ]
-        if not payload_names:
-            log.debug("Skipping add_maps_to_rotation because no valid names were resolved")
-            return
+        attempts: list[tuple[str, list[str]]] = []
+        if canonical:
+            attempts.append(("canonical", canonical))
+        if display_names and display_names != canonical:
+            attempts.append(("display", display_names))
 
-        log.debug("add_maps_to_rotation payload: %s", payload_names)
-        try:
-            self._request(
-                "add_maps_to_rotation",
-                json_payload={
-                    "map_names": payload_names,
-                    "arguments": {"map_names": payload_names},
-                },
-            )
-        except CrconHttpError as exc:
-            # If the server rejects some maps as not valid, bubble up unless it's the
-            # specific "not in rotation" type of message; log and continue otherwise.
-            msg = str(exc)
-            error_text = (rotation_resp or {}).get("error") or ""
-            if "not in rotation" in msg or "not in rotation" in error_text:
-                log.warning("Some add_maps_to_rotation entries invalid: %s", msg)
+        last_exc: CrconHttpError | None = None
+        for idx, (variant, payload) in enumerate(attempts):
+            if not payload:
+                continue
+            log.debug("add_maps_to_rotation payload (%s): %s", variant, payload)
+            try:
+                self._request(
+                    "add_maps_to_rotation",
+                    json_payload={
+                        "map_names": payload,
+                        "arguments": {"map_names": payload},
+                    },
+                )
                 return
-            raise
+            except CrconHttpError as exc:
+                last_exc = exc
+                msg = str(exc)
+                is_last = idx == len(attempts) - 1
+                if not is_last and _is_invalid_map_error(msg):
+                    next_variant = attempts[idx + 1][0]
+                    log.info(
+                        "add_maps_to_rotation using %s names failed (%s); retrying with %s names",
+                        variant,
+                        msg,
+                        next_variant,
+                    )
+                    continue
+                if _is_invalid_map_error(msg):
+                    log.warning("Some add_maps_to_rotation entries invalid: %s", msg)
+                    return
+                raise
+
+        if last_exc:
+            raise last_exc
 
     def remove_maps_from_rotation(self, map_names: Iterable[str]) -> None:
         names = [name for name in map_names if name]
@@ -270,28 +299,49 @@ class CrconApiClient:
             rotation_resp = None
 
         canonical = [name for name in self._resolve_to_canonical(names, rotation_resp) if name]
-        if not canonical:
-            log.debug("Skipping remove_maps_from_rotation because no canonical names were resolved")
+        attempts: list[tuple[str, list[str]]] = []
+        if names:
+            attempts.append(("reported", names))
+        if canonical and canonical != names:
+            attempts.append(("canonical", canonical))
+        elif not attempts:
+            log.debug("Skipping remove_maps_from_rotation because no valid names were supplied")
             return
 
-        try:
-            self._request(
-                "remove_maps_from_rotation",
-                json_payload={
-                    "map_names": canonical,
-                    "arguments": {"map_names": canonical},
-                },
-            )
-        except CrconHttpError as exc:
-            # Server may respond 400 when attempting to remove maps that are
-            # already absent. Treat that as non-fatal for idempotency.
-            msg = str(exc)
-            error_text = (rotation_resp or {}).get("error") or ""
-            msg_lower = msg.lower()
-            if "not in rotation" in msg_lower or "map" in msg_lower and "not in rotation" in msg_lower or "not in rotation" in error_text.lower():
-                log.warning("HTTP rotation removal failed (ignored): %s", msg)
+        last_exc: CrconHttpError | None = None
+        for idx, (variant, payload) in enumerate(attempts):
+            if not payload:
+                continue
+            try:
+                self._request(
+                    "remove_maps_from_rotation",
+                    json_payload={
+                        "map_names": payload,
+                        "arguments": {"map_names": payload},
+                    },
+                )
                 return
-            raise
+            except CrconHttpError as exc:
+                last_exc = exc
+                msg = str(exc)
+                is_last = idx == len(attempts) - 1
+                if not is_last and _is_invalid_map_error(msg):
+                    next_variant = attempts[idx + 1][0]
+                    log.info(
+                        "remove_maps_from_rotation using %s names failed (%s); retrying with %s names",
+                        variant,
+                        msg,
+                        next_variant,
+                    )
+                    continue
+
+                if _is_invalid_map_error(msg):
+                    log.warning("HTTP rotation removal failed (ignored): %s", msg)
+                    return
+                raise
+
+        if last_exc:
+            raise last_exc
 
     def _extract_rotation_entries(self, rotation_resp):
         if not rotation_resp:
