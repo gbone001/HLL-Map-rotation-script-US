@@ -253,7 +253,7 @@ def enforce_block(cfg):
     log.info(f"Enforcing {weekday}.{block} rotation: {target}")
 
     if not _apply_map_pool(target):
-        log.error("Rotation update aborted for block %s because the existing rotation could not be cleared", block)
+        log.error("Rotation update aborted for block %s due to errors applying the target map pool", block)
         return
 
     log.info(f"Rotation updated for block {block}. New maps queued after current match.")

@@ -7,6 +7,8 @@ from config import get_setting
 
 log = logging.getLogger(__name__)
 
+PREFERRED_DISPLAY_NAMES: dict[str, str] = {}
+
 
 def _normalize_map_key(value: str) -> str:
     if not isinstance(value, str):
@@ -60,6 +62,12 @@ def _build_fallback_canonical_map() -> dict[str, str]:
 
     fallback = {}
     for canonical, aliases in canonical_variants.items():
+        # Prefer the first pretty alias as the outbound display name
+        if aliases:
+            PREFERRED_DISPLAY_NAMES.setdefault(canonical, aliases[0])
+        else:
+            PREFERRED_DISPLAY_NAMES.setdefault(canonical, canonical)
+
         names = set(aliases or [])
         names.add(canonical)
         for name in names:
@@ -221,12 +229,22 @@ class CrconApiClient:
             rotation_resp = None
 
         canonical = self._resolve_to_canonical(names, rotation_resp)
+        payload_names = [
+            PREFERRED_DISPLAY_NAMES.get(name, name)
+            for name in canonical
+            if isinstance(name, str) and name
+        ]
+        if not payload_names:
+            log.debug("Skipping add_maps_to_rotation because no valid names were resolved")
+            return
+
+        log.debug("add_maps_to_rotation payload: %s", payload_names)
         try:
             self._request(
                 "add_maps_to_rotation",
                 json_payload={
-                    "map_names": canonical,
-                    "arguments": {"map_names": canonical},
+                    "map_names": payload_names,
+                    "arguments": {"map_names": payload_names},
                 },
             )
         except CrconHttpError as exc:
