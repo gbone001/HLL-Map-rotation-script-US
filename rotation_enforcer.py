@@ -175,50 +175,74 @@ def _rotation_from_rcon() -> list[str]:
     raw = _execute_rcon("rotlist")
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
-def get_rotation():
-    try:
-        return get_map_rotation()
-    except CrconHttpError as exc:
-        log.warning("HTTP rotation fetch failed → fallback to RCON v2: %s", exc, exc_info=True)
-        return _rotation_from_rcon()
+def _fetch_rotation_for_removal() -> list[str]:
+    log.debug("Fetching map rotation via HTTP before clearing queued entries")
+    return get_map_rotation()
 
+def _remove_queued_maps(maps: list[str]) -> bool:
+    outstanding = [name for name in maps if name]
+    if not outstanding:
+        log.debug("No maps reported in rotation to remove")
+        return True
 
-def _remove_queued_maps(maps: list[str]):
-    if not maps:
-        return
     try:
-        remove_maps_from_rotation(maps)
+        remove_maps_from_rotation(outstanding)
+        return True
     except CrconHttpError as exc:
         log.warning("HTTP rotation removal failed → fallback to RCON v2: %s", exc, exc_info=True)
-        for m in maps:
-            _execute_rcon(f"rotdel {m}")
+        rcon_rotation = _rotation_from_rcon()
+        if not rcon_rotation:
+            log.warning("RCON rotation response empty; cannot remove maps via RCON")
+            return False
+        for m in rcon_rotation:
+            try:
+                _execute_rcon(f"rotdel {m}")
+            except Exception as err:
+                log.error("Failed to remove %s via RCON v2: %s", m, err, exc_info=True)
+                return False
+        return True
 
 
-def _add_target_maps(maps: list[str]):
+def _add_target_maps(maps: list[str]) -> bool:
     if not maps:
-        return
+        log.debug("No maps to queue for the next block")
+        return True
+
     try:
         add_maps_to_rotation(maps)
+        return True
     except CrconHttpError as exc:
         log.warning("HTTP rotation append failed → fallback to RCON v2: %s", exc, exc_info=True)
         for m in maps:
-            _execute_rcon(f"rotadd {m}")
+            try:
+                _execute_rcon(f"rotadd {m}")
+            except Exception as err:
+                log.error("Failed to add %s via RCON v2: %s", m, err, exc_info=True)
+                return False
+        return True
 
 
-def _apply_map_pool(current: list[str], target: list[str]):
-    try:
-        if current:
-            _remove_queued_maps(current)
-        else:
-            log.debug("Current rotation empty; nothing to remove before applying map pool")
-    except Exception as exc:  # pragma: no cover
-        log.error("Failed to remove maps during block transition; continuing to apply next pool: %s", exc, exc_info=True)
+def _apply_map_pool(target: list[str]) -> bool:
+    rotation_snapshot = _fetch_rotation_for_removal()
+    if rotation_snapshot:
+        log.debug("Current rotation before removal: %s", rotation_snapshot)
+        log.debug("Current map still playing: %s", rotation_snapshot[0])
+    else:
+        log.warning("No current rotation data returned before block transition")
+
+    if rotation_snapshot and not _remove_queued_maps(rotation_snapshot):
+        log.error("Unable to clear the existing rotation; skipping block update")
+        return False
 
     if not target:
         log.info("Target map pool is empty for this block; rotation queue cleared")
-        return
+        return True
 
-    _add_target_maps(target)
+    if not _add_target_maps(target):
+        log.error("Failed to queue new map pool after clearing existing rotation")
+        return False
+
+    return True
 
 def enforce_block(cfg):
     ensure_schedule(cfg)
@@ -228,15 +252,9 @@ def enforce_block(cfg):
 
     log.info(f"Enforcing {weekday}.{block} rotation: {target}")
 
-    current = get_rotation()
-    log.debug(f"Current rotation: {current}")
-
-    if not current:
-        log.warning("No current rotation found")
-    else:
-        log.debug("Current map still playing: %s", current[0])
-
-    _apply_map_pool(current, target)
+    if not _apply_map_pool(target):
+        log.error("Rotation update aborted for block %s because the existing rotation could not be cleared", block)
+        return
 
     log.info(f"Rotation updated for block {block}. New maps queued after current match.")
 
