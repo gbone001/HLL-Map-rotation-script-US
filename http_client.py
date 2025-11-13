@@ -14,15 +14,24 @@ class CrconHttpError(Exception):
 
 class CrconApiClient:
     def __init__(self):
-        self.base_url = get_setting("CRCON_HTTP_BASE_URL", "CRCON_HTTP_BASE_URL")
+        # Prefer the hll-discord-ping style settings first so the same
+        # config.jsonc/env can be shared between tools. Fall back to the
+        # older CRCON_HTTP_* variables for backwards compatibility.
+        self.base_url = (
+            get_setting("API_BASE_URL", "API_BASE_URL")
+            or get_setting("CRCON_HTTP_BASE_URL", "CRCON_HTTP_BASE_URL")
+        )
         if not self.base_url:
-            raise CrconHttpError("CRCON_HTTP_BASE_URL is required for HTTP CRCON")
+            raise CrconHttpError("API_BASE_URL/CRCON_HTTP_BASE_URL is required for HTTP CRCON")
 
-        # Prefer username/password login if provided (mirrors hll-discord-ping behavior).
+        # Prefer username/password login if provided.
         # Fall back to bearer token if login credentials are not supplied.
         self.username = get_setting("CRCON_HTTP_USERNAME", "CRCON_HTTP_USERNAME")
         self.password = get_setting("CRCON_HTTP_PASSWORD", "CRCON_HTTP_PASSWORD")
-        token = get_setting("CRCON_HTTP_BEARER_TOKEN", "CRCON_HTTP_BEARER_TOKEN")
+        token = (
+            get_setting("API_BEARER_TOKEN", "API_BEARER_TOKEN")
+            or get_setting("CRCON_HTTP_BEARER_TOKEN", "CRCON_HTTP_BEARER_TOKEN")
+        )
 
         self.timeout = float(get_setting("CRCON_HTTP_TIMEOUT", "CRCON_HTTP_TIMEOUT", "10"))
         verify_raw = get_setting("CRCON_HTTP_VERIFY", "CRCON_HTTP_VERIFY", "true").lower()
