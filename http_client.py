@@ -147,7 +147,10 @@ class CrconApiClient:
 
         canonical = self._resolve_to_canonical(names, rotation_resp)
         try:
-            self._request("add_maps_to_rotation", json_payload={"map_names": canonical})
+            self._request(
+                "add_maps_to_rotation",
+                json_payload={"arguments": {"map_names": canonical}},
+            )
         except CrconHttpError as exc:
             # If the server rejects some maps as not valid, bubble up unless it's the
             # specific "not in rotation" type of message; log and continue otherwise.
@@ -176,7 +179,10 @@ class CrconApiClient:
             return
 
         try:
-            self._request("remove_maps_from_rotation", json_payload={"map_names": canonical})
+            self._request(
+                "remove_maps_from_rotation",
+                json_payload={"arguments": {"map_names": canonical}},
+            )
         except CrconHttpError as exc:
             # Server may respond 400 when attempting to remove maps that are
             # already absent. Treat that as non-fatal for idempotency.

@@ -204,6 +204,20 @@ def _add_target_maps(maps: list[str]):
         for m in maps:
             _execute_rcon(f"rotadd {m}")
 
+
+def _apply_map_pool(current: list[str], target: list[str]):
+    queued = current[1:] if current and len(current) > 1 else []
+    if queued:
+        _remove_queued_maps(queued)
+    else:
+        log.debug("No queued maps remain to remove before applying new map pool")
+
+    if not target:
+        log.info("Target map pool is empty for this block; rotation queue cleared")
+        return
+
+    _add_target_maps(target)
+
 def enforce_block(cfg):
     ensure_schedule(cfg)
     weekday = now_tz().strftime("%A").lower()
@@ -217,15 +231,10 @@ def enforce_block(cfg):
 
     if not current:
         log.warning("No current rotation found")
-        current_map = None
     else:
-        current_map = current[0]
+        log.debug("Current map still playing: %s", current[0])
 
-    # Step 1: remove all queued maps except the current one
-    _remove_queued_maps(current[1:])
-
-    # Step 2: add new block after the current map
-    _add_target_maps(target)
+    _apply_map_pool(current, target)
 
     log.info(f"Rotation updated for block {block}. New maps queued after current match.")
 

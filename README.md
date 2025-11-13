@@ -89,6 +89,14 @@ If you prefer to keep your own schedule object, just include `time_blocks` + `sc
 
 That gives you a structured POST/GET workflow while retaining the old command fallback for reliability.
 
+## Block Transition Map Pools
+
+Each block transition enforces a dedicated pool: after logging the current rotation (or detecting an empty queue), the enforcer removes any maps that were queued after the match already in progress. If the configured block list is empty that’s treated as a deliberate rotation clear, otherwise the new map list is posted via `POST /api/add_maps_to_rotation`. Queued maps are skipped gracefully when nothing remains to delete, and failures fall back to RCON v2 so the switch keeps happening even when the HTTP API misbehaves.
+
+## Testing
+
+- `python -m compileall http_client.py rotation_enforcer.py` (ensures the modified modules are syntactically valid)
+
 ## Railway Connectivity
 
 If you need Railway-hosted instances to reach a remote destination server on TCP port `7779`, follow these steps:
