@@ -83,6 +83,33 @@ If you prefer to keep your own schedule object, just include `time_blocks` + `sc
 
 The HTTP RCON client now mirrors the configuration style used by [sctewa1/hll-discord-ping](https://github.com/sctewa1/hll-discord-ping); it always posts to an API endpoint with a bearer token and keeps a persistent `requests.Session` so headers and connection pooling match the downstream Django-based API.
 
-- Define `CRCON_HTTP_BASE_URL` + `CRCON_HTTP_BEARER_TOKEN` (and optionally `CRCON_HTTP_COMMAND_PATH` if the endpoint isn’t `/api/rcon/command`).  
-- `rotation_enforcer.py` calls that endpoint and raises `CrconHttpError` when the HTTP layer returns 4xx/5xx responses, then falls back to the legacy RCON v2 client automatically.
-- The client enforces the same request timeout and TLS verification switches (`CRCON_HTTP_TIMEOUT`, `CRCON_HTTP_VERIFY`) that the Discord bot uses so you can point to the same API server with the same credentials.
+
+## Railway Connectivity
+
+If you need Railway-hosted instances to reach a remote destination server on TCP port `7779`, follow these steps:
+
+- **Determine traffic direction:**
+  - If your code (running on Railway) initiates outbound connections to `destination:7779`, Railway typically allows outbound TCP. If the destination has a firewall, it must allow traffic from Railway's egress IP(s).
+  - If the destination needs to connect inbound to your Railway service on `7779`, you must configure your Railway service to listen on the appropriate port and expose it — Railway usually routes HTTP(s) traffic and may require additional configuration for arbitrary TCP ports.
+
+- **When the destination requires a fixed egress IP:**
+  - Add Railway's Static IP (or equivalent) add-on in the Railway dashboard for your project. That will allocate one or more static egress IPs.
+  - Give those static IP(s) to the destination server's firewall and allow inbound TCP on port `7779` from them.
+
+- **Quick verification (manual test):**
+  - There's a small helper in this repo to test TCP connectivity to a host/port: `connect_test.py`.
+  - Run locally or in the Railway environment (if you have shell access) to confirm reachability:
+
+```powershell
+# From PowerShell / pwsh (repo root)
+python connect_test.py <destination-host> 7779
+```
+
+- **If your Railway service must accept incoming connections on `7779`:**
+  - Check Railway docs for exposing non-HTTP TCP services; you may need a specific service type or add-on.
+  - Ensure your application binds to the port Railway expects (often read from the `PORT`/`PORT_HTTP` environment variable).
+
+If you'd like, I can:
+
+- add a small health-check endpoint that attempts an outbound connection to the destination and logs the result, or
+- help prepare the exact steps to enable Railway's Static IP add-on and update your destination firewall rules (you'll need Railway dashboard access and the destination's firewall control).
