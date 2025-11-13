@@ -206,10 +206,13 @@ def _add_target_maps(maps: list[str]):
 
 
 def _apply_map_pool(current: list[str], target: list[str]):
-    if current:
-        _remove_queued_maps(current)
-    else:
-        log.debug("Current rotation empty; nothing to remove before applying map pool")
+    try:
+        if current:
+            _remove_queued_maps(current)
+        else:
+            log.debug("Current rotation empty; nothing to remove before applying map pool")
+    except Exception as exc:  # pragma: no cover
+        log.error("Failed to remove maps during block transition; continuing to apply next pool: %s", exc, exc_info=True)
 
     if not target:
         log.info("Target map pool is empty for this block; rotation queue cleared")

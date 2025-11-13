@@ -149,7 +149,7 @@ class CrconApiClient:
         try:
             self._request(
                 "add_maps_to_rotation",
-                json_payload={"arguments": {"map_names": canonical}},
+                json_payload={"map_names": canonical},
             )
         except CrconHttpError as exc:
             # If the server rejects some maps as not valid, bubble up unless it's the
@@ -181,7 +181,7 @@ class CrconApiClient:
         try:
             self._request(
                 "remove_maps_from_rotation",
-                json_payload={"arguments": {"map_names": canonical}},
+                json_payload={"map_names": canonical},
             )
         except CrconHttpError as exc:
             # Server may respond 400 when attempting to remove maps that are
