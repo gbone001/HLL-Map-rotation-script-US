@@ -139,13 +139,104 @@ class CrconApiClient:
         names = [name for name in map_names if name]
         if not names:
             return
-        self._request("add_maps_to_rotation", json_payload={"map_names": names})
+        # Attempt to normalize names to the server's canonical rotation entries
+        try:
+            rotation_resp = self._request("get_map_rotation", method="GET")
+        except CrconHttpError:
+            rotation_resp = None
+
+        canonical = self._resolve_to_canonical(names, rotation_resp)
+        try:
+            self._request("add_maps_to_rotation", json_payload={"map_names": canonical})
+        except CrconHttpError as exc:
+            # If the server rejects some maps as not valid, bubble up unless it's the
+            # specific "not in rotation" type of message; log and continue otherwise.
+            msg = str(exc)
+            if "not in rotation" in msg or "not in rotation" in (rotation_resp or {}).get("error", ""):
+                log.warning("Some add_maps_to_rotation entries invalid: %s", msg)
+                return
+            raise
 
     def remove_maps_from_rotation(self, map_names: Iterable[str]) -> None:
         names = [name for name in map_names if name]
         if not names:
             return
-        self._request("remove_maps_from_rotation", json_payload={"map_names": names})
+        # Normalize requested names against current rotation entries so we send
+        # the canonical identifiers the API expects (many deployments use
+        # internal layer names rather than pretty display names).
+        try:
+            rotation_resp = self._request("get_map_rotation", method="GET")
+        except CrconHttpError:
+            rotation_resp = None
+
+        canonical = self._resolve_to_canonical(names, rotation_resp)
+
+        try:
+            self._request("remove_maps_from_rotation", json_payload={"map_names": canonical})
+        except CrconHttpError as exc:
+            # Server may respond 400 when attempting to remove maps that are
+            # already absent. Treat that as non-fatal for idempotency.
+            msg = str(exc)
+            if "not in rotation" in msg or "Map" in msg and "not in rotation" in msg:
+                log.warning("HTTP rotation removal failed (ignored): %s", msg)
+                return
+            raise
+
+    def _resolve_to_canonical(self, requested_names, rotation_resp):
+        """Map a list of requested names (pretty or layer names) to canonical
+        identifiers present in the current rotation response.
+
+        rotation_resp is the raw parsed response from `get_map_rotation` and
+        may be None if the fetch failed.
+        """
+        # If we couldn't fetch rotation entries, return requests unchanged
+        if not rotation_resp:
+            return list(requested_names)
+
+        # Extract rotation entries (may be under 'result' or 'rotation')
+        payload = rotation_resp.get("result") if isinstance(rotation_resp, dict) else rotation_resp
+        if isinstance(payload, dict) and "rotation" in payload:
+            entries = payload["rotation"]
+        elif isinstance(payload, list):
+            entries = payload
+        else:
+            entries = []
+
+        # Build candidate map of normalized -> canonical
+        def norm(s: str) -> str:
+            return "".join(c.lower() for c in s if c.isalnum())
+
+        mapping = {}
+        for entry in entries:
+            if isinstance(entry, str):
+                canonical = entry
+                keys = [entry]
+            elif isinstance(entry, dict):
+                # Prefer layer_name or name as the canonical identifier
+                canonical = entry.get("layer_name") or entry.get("name") or entry.get("map_name")
+                keys = []
+                for k in ("name", "layer_name", "map_name", "pretty_name"):
+                    v = entry.get(k)
+                    if isinstance(v, str) and v:
+                        keys.append(v)
+            else:
+                continue
+
+            for k in keys:
+                mapping[norm(k)] = canonical
+
+        result = []
+        for r in requested_names:
+            if not isinstance(r, str):
+                continue
+            n = norm(r)
+            if n in mapping:
+                result.append(mapping[n])
+            else:
+                # no match — send original and let server decide
+                result.append(r)
+
+        return result
 
 
 _client: Optional[CrconApiClient] = None
