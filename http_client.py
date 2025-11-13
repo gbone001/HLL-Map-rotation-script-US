@@ -18,9 +18,11 @@ class CrconApiClient:
         if not self.base_url:
             raise CrconHttpError("CRCON_HTTP_BASE_URL is required for HTTP CRCON")
 
+        # Prefer username/password login if provided (mirrors hll-discord-ping behavior).
+        # Fall back to bearer token if login credentials are not supplied.
+        self.username = get_setting("CRCON_HTTP_USERNAME", "CRCON_HTTP_USERNAME")
+        self.password = get_setting("CRCON_HTTP_PASSWORD", "CRCON_HTTP_PASSWORD")
         token = get_setting("CRCON_HTTP_BEARER_TOKEN", "CRCON_HTTP_BEARER_TOKEN")
-        if not token:
-            raise CrconHttpError("CRCON_HTTP_BEARER_TOKEN is required for HTTP CRCON")
 
         self.timeout = float(get_setting("CRCON_HTTP_TIMEOUT", "CRCON_HTTP_TIMEOUT", "10"))
         verify_raw = get_setting("CRCON_HTTP_VERIFY", "CRCON_HTTP_VERIFY", "true").lower()
@@ -28,14 +30,23 @@ class CrconApiClient:
         self.api_root = get_setting("CRCON_HTTP_API_ROOT", "CRCON_HTTP_API_ROOT", "/api").strip("/")
 
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            }
-        )
+        # Always set JSON content-type. Authorization header is only used for token mode.
+        self.session.headers.update({"Content-Type": "application/json"})
 
-        log.info("Initialized HTTP CRCON API client for %s/%s", self.base_url.rstrip("/"), self.api_root or "")
+        # Initialize auth: login (preferred) or bearer token (fallback)
+        if self.username and self.password:
+            log.info(
+                "Initialized HTTP CRCON API client (login mode) for %s/%s",
+                self.base_url.rstrip("/"),
+                self.api_root or "",
+            )
+            self._login()
+        else:
+            if not token:
+                raise CrconHttpError("CRCON_HTTP_BEARER_TOKEN or CRCON_HTTP_USERNAME/CRCON_HTTP_PASSWORD is required for HTTP CRCON")
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
+            log.info("Initialized HTTP CRCON API client (token mode) for %s/%s", self.base_url.rstrip("/"), self.api_root or "")
+
 
     def _build_url(self, endpoint: str) -> str:
         base = self.base_url.rstrip("/")
@@ -44,6 +55,28 @@ class CrconApiClient:
             parts.append(self.api_root.strip("/"))
         parts.append(endpoint.lstrip("/"))
         return "/".join(parts)
+
+    def _login(self) -> None:
+        """Perform a login to the CRCON HTTP API and retain session cookies.
+
+        Expects `self.username` and `self.password` to be set.
+        """
+        if not self.username or not self.password:
+            raise CrconHttpError("CRCON_HTTP_USERNAME and CRCON_HTTP_PASSWORD are required for login-based HTTP CRCON")
+
+        url = self._build_url("login")
+        try:
+            resp = self.session.post(
+                url,
+                json={"username": self.username, "password": self.password},
+                timeout=self.timeout,
+                verify=self.verify,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            raise CrconHttpError(f"login failed: {exc}") from exc
+
+        log.info("HTTP CRCON login successful as %s", self.username)
 
     def _request(self, endpoint: str, method: str = "POST", json_payload=None, params=None):
         url = self._build_url(endpoint)
