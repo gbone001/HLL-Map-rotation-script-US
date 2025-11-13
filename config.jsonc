@@ -1,0 +1,10 @@
+{
+    // HTTP CRCON credentials (legacy keys still supported)
+    CRCON_HTTP_BASE_URL: "https://anzrusa.hlladmin.com/",
+    CRCON_HTTP_BEARER_TOKEN: "pbkdf2_sha256$600000$ZWMyNGM4NmI0NjI1ZTQzZjBlYjM0NGQ3$zyiuYoIiNBFyvLD12S9u962/FhDYJB+CSMDhSxNY9Ms=",
+    CRCON_HTTP_COMMAND_PATH: "/api/rcon/command",
+
+    // hll-discord-ping compatible keys so both tools can share this file
+    API_BASE_URL: "https://anzrusa.hlladmin.com",
+    API_BEARER_TOKEN: "pbkdf2_sha256$600000$ZWMyNGM4NmI0NjI1ZTQzZjBlYjM0NGQ3$zyiuYoIiNBFyvLD12S9u962/FhDYJB+CSMDhSxNY9Ms="
+}
