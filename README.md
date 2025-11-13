@@ -81,8 +81,11 @@ If you prefer to keep your own schedule object, just include `time_blocks` + `sc
 
 ## CRCON HTTP Integration
 
-The HTTP RCON client now mirrors the configuration style used by [sctewa1/hll-discord-ping](https://github.com/sctewa1/hll-discord-ping); it always posts to an API endpoint with a bearer token and keeps a persistent `requests.Session` so headers and connection pooling match the downstream Django-based API.
+`rotation_enforcer.py` now uses the same CRCON HTTP configuration style as [sctewa1/hll-discord-ping](https://github.com/sctewa1/hll-discord-ping). It loads `config.jsonc` (a sample is provided) via `CONFIG_PATH`, and environment variables override the JSON values, so you can keep a single source of credentials for multiple projects.
 
+- Copy `config.sample.jsonc` to `config.jsonc`, set `CONFIG_PATH` if needed, or supply `CRCON_HTTP_BASE_URL`, `CRCON_HTTP_BEARER_TOKEN`, and `CRCON_HTTP_COMMAND_PATH` via the environment.
+- The HTTP client keeps a long-lived `requests.Session` (matching the Django backend) with bearer auth, posts `{"command": ...}` payloads, respects `CRCON_HTTP_TIMEOUT`/`CRCON_HTTP_VERIFY`, and raises `CrconHttpError` on HTTP failures.
+- When HTTP fails, `rotation_enforcer.py` falls back to the legacy `RconV2` client, so commands still execute.
 
 ## Railway Connectivity
 

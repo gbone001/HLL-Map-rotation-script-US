@@ -3,7 +3,7 @@ from typing import Optional
 
 import requests
 
-from config import get_env
+from config import get_setting
 
 log = logging.getLogger(__name__)
 
@@ -14,18 +14,18 @@ class CrconHttpError(Exception):
 
 class CrconHttpClient:
     def __init__(self):
-        self.base_url = get_env("CRCON_HTTP_BASE_URL")
+        self.base_url = get_setting("CRCON_HTTP_BASE_URL", "CRCON_HTTP_BASE_URL")
         if not self.base_url:
             raise CrconHttpError("CRCON_HTTP_BASE_URL is required for HTTP CRCON")
 
-        token = get_env("CRCON_HTTP_BEARER_TOKEN")
+        token = get_setting("CRCON_HTTP_BEARER_TOKEN", "CRCON_HTTP_BEARER_TOKEN")
         if not token:
             raise CrconHttpError("CRCON_HTTP_BEARER_TOKEN is required for HTTP CRCON")
 
         self.timeout = float(get_env("CRCON_HTTP_TIMEOUT", "10"))
         verify_raw = get_env("CRCON_HTTP_VERIFY", "true").lower()
         self.verify = verify_raw not in ("false", "0", "no", "off")
-        path = get_env("CRCON_HTTP_COMMAND_PATH", "/api/rcon/command")
+        path = get_setting("CRCON_HTTP_COMMAND_PATH", "CRCON_HTTP_COMMAND_PATH", "/api/rcon/command")
         self.command_url = self._normalize_url(path)
 
         self.session = requests.Session()

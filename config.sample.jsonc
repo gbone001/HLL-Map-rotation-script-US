@@ -1,0 +1,6 @@
+{
+    // HTTP CRCON credentials
+    CRCON_HTTP_BASE_URL: "https://server.example.com",
+    CRCON_HTTP_BEARER_TOKEN: "your-token-from-crcon",
+    CRCON_HTTP_COMMAND_PATH: "/api/rcon/command"
+}
