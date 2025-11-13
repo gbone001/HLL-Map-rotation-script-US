@@ -170,7 +170,10 @@ class CrconApiClient:
         except CrconHttpError:
             rotation_resp = None
 
-        canonical = self._resolve_to_canonical(names, rotation_resp)
+        canonical = [name for name in self._resolve_to_canonical(names, rotation_resp) if name]
+        if not canonical:
+            log.debug("Skipping remove_maps_from_rotation because no canonical names were resolved")
+            return
 
         try:
             self._request("remove_maps_from_rotation", json_payload={"map_names": canonical})
@@ -178,7 +181,9 @@ class CrconApiClient:
             # Server may respond 400 when attempting to remove maps that are
             # already absent. Treat that as non-fatal for idempotency.
             msg = str(exc)
-            if "not in rotation" in msg or "Map" in msg and "not in rotation" in msg:
+            error_text = (rotation_resp or {}).get("error") or ""
+            msg_lower = msg.lower()
+            if "not in rotation" in msg_lower or "map" in msg_lower and "not in rotation" in msg_lower or "not in rotation" in error_text.lower():
                 log.warning("HTTP rotation removal failed (ignored): %s", msg)
                 return
             raise
