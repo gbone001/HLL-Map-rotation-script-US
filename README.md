@@ -66,3 +66,15 @@ Rotation A and Rotation B each have their own S-night sequence so you get a 2-we
 - Same for all days and for `rotation_B`.
 
 You can wire this JSON directly into your rotation enforcer script to rebuild the server rotation at each block change.
+
+## Rotation Selection
+
+`rotation_enforcer.py` now understands the multi-rotation JSON above even without explicit `time_blocks`/`schedule` sections. When those fields are missing it will:
+
+- fall back to the hard-coded windows (off-peak 00:00−14:30, peak 14:31−23:59 documented earlier),
+- derive the active rotation (`rotation_A`, `rotation_B`, etc.) using `cycle_length_weeks` and a week-based anchor (defaults to `2025-01-01`),
+- follow an optional `rotation_order` list if you need a non-alphabetic sequence,
+- allow `cycle_anchor` in the JSON or the `ROTATION_CYCLE_ANCHOR` env var to change the anchor date,
+- respect the `ROTATION_NAME` env var when you want to force a specific rotation regardless of the calendar.
+
+If you prefer to keep your own schedule object, just include `time_blocks` + `schedule` in the JSON and the enforcer will use those values unchanged.
