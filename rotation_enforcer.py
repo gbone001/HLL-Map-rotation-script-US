@@ -6,7 +6,12 @@ from datetime import datetime, time as dtime, timedelta
 from zoneinfo import ZoneInfo
 
 from config import get_env
-from http_client import http_rcon, CrconHttpError
+from http_client import (
+    CrconHttpError,
+    add_maps_to_rotation,
+    get_map_rotation,
+    remove_maps_from_rotation,
+)
 from rcon_v2 import RconV2
 
 log = logging.getLogger(__name__)
@@ -163,16 +168,41 @@ def get_next_transition(cfg):
 
     return min(future)
 
-def safe_rcon(command: str):
-    try:
-        return http_rcon(command)
-    except Exception as exc:
-        log.warning("HTTP failed → fallback to RCON v2: %s", exc, exc_info=True)
-        return RconV2().send_cmd(command)
+def _execute_rcon(command: str) -> str:
+    return RconV2().send_cmd(command)
+
+def _rotation_from_rcon() -> list[str]:
+    raw = _execute_rcon("rotlist")
+    return [line.strip() for line in raw.splitlines() if line.strip()]
 
 def get_rotation():
-    raw = safe_rcon("rotlist")
-    return [line.strip() for line in raw.splitlines() if line.strip()]
+    try:
+        return get_map_rotation()
+    except CrconHttpError as exc:
+        log.warning("HTTP rotation fetch failed → fallback to RCON v2: %s", exc, exc_info=True)
+        return _rotation_from_rcon()
+
+
+def _remove_queued_maps(maps: list[str]):
+    if not maps:
+        return
+    try:
+        remove_maps_from_rotation(maps)
+    except CrconHttpError as exc:
+        log.warning("HTTP rotation removal failed → fallback to RCON v2: %s", exc, exc_info=True)
+        for m in maps:
+            _execute_rcon(f"rotdel {m}")
+
+
+def _add_target_maps(maps: list[str]):
+    if not maps:
+        return
+    try:
+        add_maps_to_rotation(maps)
+    except CrconHttpError as exc:
+        log.warning("HTTP rotation append failed → fallback to RCON v2: %s", exc, exc_info=True)
+        for m in maps:
+            _execute_rcon(f"rotadd {m}")
 
 def enforce_block(cfg):
     ensure_schedule(cfg)
@@ -186,18 +216,16 @@ def enforce_block(cfg):
     log.debug(f"Current rotation: {current}")
 
     if not current:
-        log.warn("No current rotation found")
+        log.warning("No current rotation found")
         current_map = None
     else:
         current_map = current[0]
 
     # Step 1: remove all queued maps except the current one
-    for m in current[1:]:
-        safe_rcon(f"rotdel {m}")
+    _remove_queued_maps(current[1:])
 
     # Step 2: add new block after the current map
-    for m in target:
-        safe_rcon(f"rotadd {m}")
+    _add_target_maps(target)
 
     log.info(f"Rotation updated for block {block}. New maps queued after current match.")
 
