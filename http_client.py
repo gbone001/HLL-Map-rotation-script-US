@@ -103,6 +103,7 @@ class CrconApiClient:
             return {"result": response.text}
 
     def get_map_rotation(self) -> List[str]:
+        log.info("Requesting map rotation via HTTP API")
         data = self._request("get_map_rotation", method="GET")
         payload = data.get("result") if isinstance(data, dict) else data
         if payload is None:

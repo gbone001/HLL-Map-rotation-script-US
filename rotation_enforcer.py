@@ -176,7 +176,7 @@ def _rotation_from_rcon() -> list[str]:
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 def _fetch_rotation_for_removal() -> list[str]:
-    log.debug("Fetching map rotation via HTTP before clearing queued entries")
+    log.info("Fetching map rotation via HTTP before clearing queued entries")
     return get_map_rotation()
 
 def _remove_queued_maps(maps: list[str]) -> bool:
