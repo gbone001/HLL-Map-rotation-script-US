@@ -1,235 +1,507 @@
 {
-  "version": 3,
-  "description": "Two week rotation with Option C S-night distribution (4 peak, 3 off-peak), strict S-night rotation, structured A-slot placement, and no sequential S-tier in peak.",
+  "version": 4,
+  "description": "Four-week rotation via Rotation A (weeks 1-2) and Rotation B (weeks 3-4). Off-peak has 15 maps, peak has 10. Deterministic rotation of S, S-night, A, B tiers.",
   "timezone": "UTC",
   "cycle_length_weeks": 2,
-
+  "tiers": {
+    "S_day": [
+      "stmariedumont_warfare",
+      "stmereeglise_warfare",
+      "carentan_warfare",
+      "utahbeach_warfare",
+      "omahabeach_warfare"
+    ],
+    "S_night": [
+      "stmariedumont_warfare_night",
+      "stmereeglise_warfare_night",
+      "carentan_warfare_night",
+      "utahbeach_warfare_night",
+      "omahabeach_warfare_night"
+    ],
+    "A": [
+      "foy_warfare",
+      "kharkov_warfare",
+      "kursk_warfare",
+      "purpleheartlane_warfare",
+      "hill400_warfare",
+      "driel_warfare",
+      "hurtgenforest_warfare_V2",
+      "elsenbornridge_warfare_day"
+    ],
+    "B": [
+      "remagen_warfare",
+      "mortain_warfare",
+      "tobruk_warfare",
+      "elalamein_warfare",
+      "stalingrad_warfare"
+    ]
+  },
+  "snight_pattern": {
+    "peak_days": [
+      "friday",
+      "monday",
+      "sunday",
+      "wednesday"
+    ],
+    "offpeak_days": [
+      "saturday",
+      "thursday",
+      "tuesday"
+    ],
+    "rotation_A_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      0,
+      1
+    ],
+    "rotation_B_indices": [
+      2,
+      3,
+      4,
+      0,
+      1,
+      2,
+      3
+    ]
+  },
   "rotation_A": {
     "monday": {
       "off_peak": [
         "stmariedumont_warfare",
-        "foy_warfare",
         "stmereeglise_warfare",
         "carentan_warfare",
-        "utahbeach_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "remagen_warfare",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare"
       ],
       "peak": [
-        "kharkov_warfare",
-        "stmariedumont_warfare_night",
-        "hill400_warfare",
+        "stmariedumont_warfare",
         "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare_night",
+        "foy_warfare",
+        "purpleheartlane_warfare",
+        "driel_warfare",
         "remagen_warfare"
       ]
     },
     "tuesday": {
       "off_peak": [
         "stmereeglise_warfare_night",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
         "kharkov_warfare",
-        "omahabeach_warfare",
-        "carentan_warfare"
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare"
       ],
       "peak": [
-        "kursk_warfare",
-        "stmariedumont_warfare",
-        "purpleheartlane_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
         "utahbeach_warfare",
-        "elalamein_warfare"
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "kharkov_warfare",
+        "hill400_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "mortain_warfare"
       ]
     },
     "wednesday": {
       "off_peak": [
         "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
         "stmereeglise_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
         "hurtgenforest_warfare_V2",
-        "utahbeach_warfare"
+        "elsenbornridge_warfare_day",
+        "tobruk_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare"
       ],
       "peak": [
-        "driel_warfare",
-        "carentan_warfare_night",
-        "kharkov_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
         "omahabeach_warfare",
-        "stalingrad_warfare"
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare_night",
+        "kursk_warfare",
+        "driel_warfare",
+        "elsenbornridge_warfare_day",
+        "tobruk_warfare"
       ]
     },
     "thursday": {
       "off_peak": [
         "utahbeach_warfare_night",
-        "kursk_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
         "stmereeglise_warfare",
         "carentan_warfare",
-        "omahabeach_warfare"
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare"
       ],
       "peak": [
-        "foy_warfare",
-        "stmariedumont_warfare",
-        "hill400_warfare",
         "utahbeach_warfare",
-        "remagen_warfare"
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "purpleheartlane_warfare",
+        "hurtgenforest_warfare_V2",
+        "foy_warfare",
+        "kharkov_warfare",
+        "elalamein_warfare"
       ]
     },
     "friday": {
       "off_peak": [
         "omahabeach_warfare",
         "stmariedumont_warfare",
-        "purpleheartlane_warfare",
+        "stmereeglise_warfare",
         "carentan_warfare",
-        "stmereeglise_warfare"
+        "utahbeach_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare",
+        "mortain_warfare",
+        "tobruk_warfare"
       ],
       "peak": [
-        "hill400_warfare",
-        "omahabeach_warfare_night",
-        "driel_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
-        "tobruk_warfare"
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare_night",
+        "hill400_warfare",
+        "elsenbornridge_warfare_day",
+        "kharkov_warfare",
+        "stalingrad_warfare"
       ]
     },
     "saturday": {
       "off_peak": [
         "stmariedumont_warfare_night",
+        "stmariedumont_warfare",
         "stmereeglise_warfare",
-        "kharkov_warfare",
         "carentan_warfare",
-        "utahbeach_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "remagen_warfare",
+        "mortain_warfare",
+        "tobruk_warfare"
       ],
       "peak": [
-        "kursk_warfare",
         "stmariedumont_warfare",
-        "foy_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
         "omahabeach_warfare",
+        "driel_warfare",
+        "foy_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
         "remagen_warfare"
       ]
     },
     "sunday": {
       "off_peak": [
         "stmereeglise_warfare",
-        "stmariedumont_warfare",
-        "driel_warfare",
         "carentan_warfare",
-        "utahbeach_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare"
       ],
       "peak": [
-        "purpleheartlane_warfare",
-        "stmereeglise_warfare_night",
-        "hill400_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
         "omahabeach_warfare",
-        "elalamein_warfare"
+        "stmariedumont_warfare",
+        "stmereeglise_warfare_night",
+        "hurtgenforest_warfare_V2",
+        "kharkov_warfare",
+        "purpleheartlane_warfare",
+        "mortain_warfare"
       ]
     }
   },
-
   "rotation_B": {
     "monday": {
       "off_peak": [
-        "carentan_warfare",
-        "hill400_warfare",
+        "stmariedumont_warfare",
         "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
         "omahabeach_warfare",
-        "stmariedumont_warfare"
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare"
       ],
       "peak": [
-        "foy_warfare",
-        "carentan_warfare_night",
-        "kharkov_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
         "utahbeach_warfare",
-        "remagen_warfare"
+        "omahabeach_warfare",
+        "carentan_warfare_night",
+        "kursk_warfare",
+        "driel_warfare",
+        "elsenbornridge_warfare_day",
+        "mortain_warfare"
       ]
     },
     "tuesday": {
       "off_peak": [
-        "utahbeach_warfare",
-        "stmariedumont_warfare",
-        "kursk_warfare",
+        "utahbeach_warfare_night",
+        "stmereeglise_warfare",
         "carentan_warfare",
-        "stmereeglise_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare"
       ],
       "peak": [
-        "driel_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
         "utahbeach_warfare",
-        "hill400_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
+        "purpleheartlane_warfare",
+        "hurtgenforest_warfare_V2",
+        "foy_warfare",
+        "kharkov_warfare",
         "tobruk_warfare"
       ]
     },
     "wednesday": {
       "off_peak": [
-        "omahabeach_warfare",
-        "stmereeglise_warfare",
-        "hurtgenforest_warfare_V2",
         "carentan_warfare",
-        "utahbeach_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare",
+        "mortain_warfare"
       ],
       "peak": [
-        "kharkov_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
         "omahabeach_warfare_night",
         "hill400_warfare",
-        "stmariedumont_warfare",
-        "stalingrad_warfare"
+        "elsenbornridge_warfare_day",
+        "kharkov_warfare",
+        "elalamein_warfare"
       ]
     },
     "thursday": {
       "off_peak": [
-        "stmereeglise_warfare",
-        "foy_warfare",
+        "stmariedumont_warfare_night",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
+        "stmereeglise_warfare",
         "carentan_warfare",
-        "omahabeach_warfare"
+        "driel_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare",
+        "mortain_warfare"
       ],
       "peak": [
-        "kursk_warfare",
-        "stmariedumont_warfare",
-        "elsenbornridge_warfare_day",
         "utahbeach_warfare",
-        "elalamein_warfare"
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "driel_warfare",
+        "foy_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "stalingrad_warfare"
       ]
     },
     "friday": {
       "off_peak": [
+        "omahabeach_warfare",
         "stmariedumont_warfare",
-        "utahbeach_warfare",
-        "purpleheartlane_warfare",
         "stmereeglise_warfare",
-        "carentan_warfare"
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "hurtgenforest_warfare_V2",
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "remagen_warfare",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare"
       ],
       "peak": [
-        "hill400_warfare",
-        "stmariedumont_warfare_night",
-        "kursk_warfare",
         "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "stmereeglise_warfare_night",
+        "hurtgenforest_warfare_V2",
+        "kharkov_warfare",
+        "purpleheartlane_warfare",
         "remagen_warfare"
       ]
     },
     "saturday": {
       "off_peak": [
-        "stmereeglise_warfare_night",
+        "carentan_warfare_night",
         "stmariedumont_warfare",
-        "kharkov_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
         "omahabeach_warfare",
-        "carentan_warfare"
+        "elsenbornridge_warfare_day",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "mortain_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare"
       ],
       "peak": [
-        "driel_warfare",
+        "stmariedumont_warfare",
+        "stmereeglise_warfare",
         "carentan_warfare",
-        "hurtgenforest_warfare_V2",
         "utahbeach_warfare",
-        "tobruk_warfare"
+        "omahabeach_warfare",
+        "elsenbornridge_warfare_day",
+        "kursk_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "mortain_warfare"
       ]
     },
     "sunday": {
       "off_peak": [
-        "utahbeach_warfare",
         "stmereeglise_warfare",
-        "hill400_warfare",
         "carentan_warfare",
-        "omahabeach_warfare"
+        "utahbeach_warfare",
+        "omahabeach_warfare",
+        "stmariedumont_warfare",
+        "foy_warfare",
+        "kharkov_warfare",
+        "kursk_warfare",
+        "purpleheartlane_warfare",
+        "hill400_warfare",
+        "driel_warfare",
+        "tobruk_warfare",
+        "elalamein_warfare",
+        "stalingrad_warfare",
+        "remagen_warfare"
       ],
       "peak": [
-        "kharkov_warfare",
-        "utahbeach_warfare_night",
-        "hill400_warfare",
+        "stmereeglise_warfare",
+        "carentan_warfare",
+        "utahbeach_warfare",
+        "omahabeach_warfare",
         "stmariedumont_warfare",
-        "elalamein_warfare"
+        "utahbeach_warfare_night",
+        "foy_warfare",
+        "purpleheartlane_warfare",
+        "driel_warfare",
+        "tobruk_warfare"
       ]
     }
   }

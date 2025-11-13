@@ -1,58 +1,68 @@
 
-# Hell Let Loose – Automated Weekly Map Rotation (Railway Headless Service)
+# HLL Map Rotation – New Schedule (Peak 10, Off-peak 15)
 
-This repo contains a lightweight, production-ready automated map rotation system for HLL servers.
+This package contains an updated 2-cycle rotation for a 4-week schedule:
 
-## Features
-- Uses CRCON **HTTP API first**
-- Falls back to **RCON v2** (minimal XOR implementation)
-- Fully controlled by `weekly_rotation.json`
-- One S-tier night map per day
-- A/B tiers use day-only layers
-- Zero disruption: current match continues; new rotation starts next map
-- Headless: no web server, no FastAPI — PERFECT for Railway
+- **Rotation A** → Weeks 1–2
+- **Rotation B** → Weeks 3–4
+- Then repeat.
 
-## Environment Variables
-```
-TIMEZONE=UTC
-LOG_LEVEL=INFO        # DEBUG / INFO / WARN / ERROR
+## Key Rules
 
-# CRCON HTTP
-CRCON_HTTP_BASE_URL=https://your-crcon
-CRCON_HTTP_BEARER_TOKEN=xxxxx
-CRCON_HTTP_VERIFY=false
-CRCON_HTTP_TIMEOUT=10
+- **Off-peak window:** 00:00–14:30
+- **Peak window:** 14:31–23:59
+- **Off-peak:** 15 maps per day
+  - Mix of S-day, S-night (3 days per week), A-tier, B-tier
+- **Peak:** 10 maps per day
+  - Mix of S-day, S-night (4 days per week), A-tier, B-tier
+- All tier lists are rotated **deterministically** so over time each map is used evenly.
 
-# RCON fallback
-RCON_HOST=0.0.0.0
-RCON_PORT=12345
-RCON_PASSWORD=xxxx
+## S-tier
 
-# Rotation JSON
-WEEKLY_ROTATION_PATH=./weekly_rotation.json
-```
+S-day:
+- stmariedumont_warfare
+- stmereeglise_warfare
+- carentan_warfare
+- utahbeach_warfare
+- omahabeach_warfare
 
-## Railway Deploy
-1. Push repo to GitHub  
-2. Create a new Railway service → Deploy from GitHub  
-3. Set all environment variables  
-4. Start command:
-```
-python rotation_enforcer.py
-```
+S-night:
+- stmariedumont_warfare_night
+- stmereeglise_warfare_night
+- carentan_warfare_night
+- utahbeach_warfare_night
+- omahabeach_warfare_night
 
-## Logs
-Logging controlled via `LOG_LEVEL` env:
-- DEBUG     → verbose
-- INFO      → recommended
-- WARN      → warnings only
-- ERROR     → errors only
+## A-tier
 
-## Files
-- `rotation_enforcer.py` – main scheduler + logic
-- `http_client.py` – CRCON HTTP API binding
-- `rcon_v2.py` – minimal fallback client
-- `config.py` – env + logger
-- `weekly_rotation.json`
-- `requirements.txt`
-- `railway.json`
+- foy_warfare
+- kharkov_warfare
+- kursk_warfare
+- purpleheartlane_warfare
+- hill400_warfare
+- driel_warfare
+- hurtgenforest_warfare_V2
+- elsenbornridge_warfare_day
+
+## B-tier
+
+- remagen_warfare
+- mortain_warfare
+- tobruk_warfare
+- elalamein_warfare
+- stalingrad_warfare
+
+## S-night Weekly Pattern
+
+- **Peak S-night:** Monday, Wednesday, Friday, Sunday
+- **Off-peak S-night:** Tuesday, Thursday, Saturday
+
+Rotation A and Rotation B each have their own S-night sequence so you get a 2-week S-night cycle that then repeats.
+
+## JSON Structure
+
+- `rotation_A.monday.off_peak` → list of 15 map layer names
+- `rotation_A.monday.peak` → list of 10 map layer names
+- Same for all days and for `rotation_B`.
+
+You can wire this JSON directly into your rotation enforcer script to rebuild the server rotation at each block change.
