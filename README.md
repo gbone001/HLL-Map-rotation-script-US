@@ -78,3 +78,11 @@ You can wire this JSON directly into your rotation enforcer script to rebuild th
 - respect the `ROTATION_NAME` env var when you want to force a specific rotation regardless of the calendar.
 
 If you prefer to keep your own schedule object, just include `time_blocks` + `schedule` in the JSON and the enforcer will use those values unchanged.
+
+## CRCON HTTP Integration
+
+The HTTP RCON client now mirrors the configuration style used by [sctewa1/hll-discord-ping](https://github.com/sctewa1/hll-discord-ping); it always posts to an API endpoint with a bearer token and keeps a persistent `requests.Session` so headers and connection pooling match the downstream Django-based API.
+
+- Define `CRCON_HTTP_BASE_URL` + `CRCON_HTTP_BEARER_TOKEN` (and optionally `CRCON_HTTP_COMMAND_PATH` if the endpoint isn’t `/api/rcon/command`).  
+- `rotation_enforcer.py` calls that endpoint and raises `CrconHttpError` when the HTTP layer returns 4xx/5xx responses, then falls back to the legacy RCON v2 client automatically.
+- The client enforces the same request timeout and TLS verification switches (`CRCON_HTTP_TIMEOUT`, `CRCON_HTTP_VERIFY`) that the Discord bot uses so you can point to the same API server with the same credentials.
