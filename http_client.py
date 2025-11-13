@@ -152,7 +152,8 @@ class CrconApiClient:
             # If the server rejects some maps as not valid, bubble up unless it's the
             # specific "not in rotation" type of message; log and continue otherwise.
             msg = str(exc)
-            if "not in rotation" in msg or "not in rotation" in (rotation_resp or {}).get("error", ""):
+            error_text = (rotation_resp or {}).get("error") or ""
+            if "not in rotation" in msg or "not in rotation" in error_text:
                 log.warning("Some add_maps_to_rotation entries invalid: %s", msg)
                 return
             raise
