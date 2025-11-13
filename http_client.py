@@ -219,12 +219,20 @@ class CrconApiClient:
                 keys = [entry]
             elif isinstance(entry, dict):
                 # Prefer layer_name or name as the canonical identifier
-                canonical = entry.get("layer_name") or entry.get("name") or entry.get("map_name")
                 keys = []
-                for k in ("name", "layer_name", "map_name", "pretty_name"):
+                for k in ("layer_name", "name", "map_name", "pretty_name"):
                     v = entry.get(k)
                     if isinstance(v, str) and v:
                         keys.append(v)
+                canonical = (
+                    entry.get("layer_name")
+                    or entry.get("name")
+                    or entry.get("map_name")
+                    or entry.get("pretty_name")
+                    or (keys[0] if keys else None)
+                )
+                if not canonical:
+                    continue
             else:
                 continue
 
