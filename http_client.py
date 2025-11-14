@@ -281,7 +281,7 @@ class CrconApiClient:
                     )
                     continue
                 if _is_invalid_map_error(msg):
-                    log.warning("Some add_maps_to_rotation entries invalid: %s", msg)
+                    log.info("Some add_maps_to_rotation entries invalid: %s", msg)
                     return
                 raise
 
@@ -338,7 +338,7 @@ class CrconApiClient:
                     continue
 
                 if _is_invalid_map_error(msg):
-                    log.warning("HTTP rotation removal failed (ignored): %s", msg)
+                    log.info("HTTP rotation removal failed (ignored): %s", msg)
                     return
                 raise
 
