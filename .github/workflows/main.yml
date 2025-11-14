@@ -1,0 +1,6 @@
+- name: Shut down Railway deployment
+  env:
+    RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  run: |
+    npm install -g @railway/cli
+    railway down --service <name>
