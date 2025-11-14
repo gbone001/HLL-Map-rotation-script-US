@@ -1,0 +1,21 @@
+name: Deploy to Railway
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Railway service name"
+        required: true
+        default: "map-rotation-us"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli
+      - name: Deploy service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service "${{ github.event.inputs.service }}"
