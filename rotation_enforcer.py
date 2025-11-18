@@ -258,6 +258,14 @@ def enforce_block(cfg):
 
     log.info(f"Rotation updated for block {block}. New maps queued after current match.")
 
+def _retry_delay_seconds() -> int:
+    """Return retry delay (seconds) when CRCON is unavailable."""
+    raw = get_env("CRCON_RETRY_SECONDS")
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return 600
+
 def main():
     path = get_env("WEEKLY_ROTATION_PATH", "./weekly_rotation.json")
     cfg = read_json(path)
@@ -265,7 +273,19 @@ def main():
     ensure_schedule(cfg)
 
     while True:
-        enforce_block(cfg)
+        try:
+            enforce_block(cfg)
+        except CrconHttpError as exc:
+            delay = _retry_delay_seconds()
+            log.error(
+                "CRCON HTTP login/API unavailable; will retry in %ds: %s",
+                delay,
+                exc,
+                exc_info=True,
+            )
+            time.sleep(delay)
+            continue
+
         nxt = get_next_transition(cfg)
         now = now_tz()
         sleep_s = (nxt - now).total_seconds()
